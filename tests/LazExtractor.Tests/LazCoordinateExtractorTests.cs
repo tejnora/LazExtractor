@@ -1,4 +1,9 @@
+using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Threading;
 using LazExtractor.Cli;
 
 namespace LazExtractor.Tests;
@@ -20,7 +25,8 @@ public sealed class LazCoordinateExtractorTests
                 inputFile,
                 outputDirectory,
                 Recursive: false,
-                Overwrite: true);
+                Overwrite: true,
+                Format: OutputFormat.Txt);
 
             var expectedPoints = new[]
             {
@@ -44,6 +50,67 @@ public sealed class LazCoordinateExtractorTests
                 .ToArray();
 
             Assert.Equal(expectedLines, lines);
+        }
+        finally
+        {
+            Directory.Delete(tempRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void Extract_SingleFile_WritesDxfPoints()
+    {
+        var tempRoot = CreateTemporaryDirectory();
+        try
+        {
+            var inputFile = Path.Combine(tempRoot, "source.laz");
+            File.WriteAllText(inputFile, string.Empty);
+            var outputDirectory = Path.Combine(tempRoot, "out");
+            Directory.CreateDirectory(outputDirectory);
+
+            var options = new ExtractionOptions(
+                inputFile,
+                outputDirectory,
+                Recursive: false,
+                Overwrite: true,
+                Format: OutputFormat.Dxf);
+
+            var expectedPoints = new[]
+            {
+                new Point3D(1.0, 2.0, 3.0),
+                new Point3D(-4.5, 0.0, 10.25)
+            };
+
+            var extractor = new LazCoordinateExtractor(new FakePointSourceFactory(expectedPoints));
+
+            var summary = extractor.Extract(options, CancellationToken.None);
+
+            Assert.Equal(1, summary.ProcessedFiles);
+            Assert.Equal(expectedPoints.Length, summary.ProcessedPoints);
+
+            var outputFile = Path.Combine(outputDirectory, "source.dxf");
+            Assert.True(File.Exists(outputFile));
+            var dxf = File.ReadAllText(outputFile);
+
+            Assert.Contains("2\r\nENTITIES\r\n", dxf);
+            foreach (var point in expectedPoints)
+            {
+                var block = string.Join(
+                    "\r\n",
+                    "0",
+                    "POINT",
+                    "8",
+                    "Laz Points",
+                    "10",
+                    Format(point.X),
+                    "20",
+                    Format(point.Y),
+                    "30",
+                    Format(point.Z));
+                Assert.Contains(block, dxf);
+            }
+
+            Assert.EndsWith("0\r\nEOF\r\n", dxf);
         }
         finally
         {

@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace LazExtractor.Cli;
 
@@ -34,7 +33,7 @@ internal sealed class LazCoordinateExtractor
         {
             cancellationToken.ThrowIfCancellationRequested();
             var outputFile = planner.GetOutputPath(lazFile);
-            var points = ExtractSingleFile(lazFile, outputFile, options.Overwrite, cancellationToken);
+            var points = ExtractSingleFile(lazFile, outputFile, options.Overwrite, options.Format, cancellationToken);
             processedFiles++;
             processedPoints += points;
             Console.WriteLine($"→ {Path.GetFileName(lazFile)} ({points.ToString("N0", CultureInfo.InvariantCulture)} bodů)");
@@ -80,6 +79,7 @@ internal sealed class LazCoordinateExtractor
         string inputFile,
         string outputFile,
         bool overwrite,
+        OutputFormat format,
         CancellationToken cancellationToken)
     {
         if (!overwrite && File.Exists(outputFile))
@@ -97,25 +97,17 @@ internal sealed class LazCoordinateExtractor
         using var progress = new ProgressPrinter(Path.GetFileName(inputFile) ?? inputFile, source.TotalPoints);
         progress.Report(source.ProcessedPoints);
         using var stream = new FileStream(outputFile, FileMode.Create, FileAccess.Write, FileShare.Read);
-        using var writer = new StreamWriter(stream, Encoding.ASCII, bufferSize: 1 << 16)
-        {
-            NewLine = "\n"
-        };
+        using var writer = PointWriterFactory.Create(format, stream);
 
         long written = 0;
         while (source.TryReadNext(out var point))
         {
             cancellationToken.ThrowIfCancellationRequested();
-            writer.Write(CoordinateFormatter.Format(point.X));
-            writer.Write(' ');
-            writer.Write(CoordinateFormatter.Format(point.Y));
-            writer.Write(' ');
-            writer.WriteLine(CoordinateFormatter.Format(point.Z));
+            writer.Write(point);
             written++;
             progress.Report(source.ProcessedPoints);
         }
 
-        writer.Flush();
         progress.Complete();
         return written;
     }
@@ -131,11 +123,13 @@ internal sealed class LazCoordinateExtractor
         private readonly string _outputDirectory;
         private readonly string? _explicitFile;
         private readonly string? _inputRoot;
+        private readonly string _outputExtension;
 
         public OutputPlanner(ExtractionOptions options, IReadOnlyList<string> inputFiles)
         {
             var inputIsDirectory = Directory.Exists(options.InputPath);
             _inputRoot = inputIsDirectory ? Path.GetFullPath(options.InputPath) : null;
+            _outputExtension = options.Format.GetFileExtension();
             var requiresDirectory = inputFiles.Count > 1 || inputIsDirectory;
             var outputExistsDirectory = Directory.Exists(options.OutputPath);
             var looksLikeDirectory = !Path.HasExtension(options.OutputPath);
@@ -174,7 +168,7 @@ internal sealed class LazCoordinateExtractor
                 return _explicitFile;
             }
 
-            var fileName = Path.GetFileNameWithoutExtension(inputFile) + ".txt";
+            var fileName = Path.GetFileNameWithoutExtension(inputFile) + _outputExtension;
             if (_inputRoot == null)
             {
                 return Path.Combine(_outputDirectory, fileName);

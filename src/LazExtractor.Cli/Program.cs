@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Globalization;
 using System.IO;
 using System.Threading;
 
@@ -59,12 +60,13 @@ internal static class ArgumentParser
 {
     private static readonly string Usage = """
 Použití:
-  LazExtractor --input <soubor|složka> --output <soubor|složka> [--recursive] [--overwrite]
+  LazExtractor --input <soubor|složka> --output <soubor|složka> [--recursive] [--overwrite] [--format <txt|dxf>]
 
 Volby:
   -i, --input        Vstupní LAZ/LAS soubor nebo složka.
   -o, --output       Výstupní TXT soubor nebo složka.
   -r, --recursive    Rekurzivní procházení vstupní složky (pokud je vstup složka).
+  -f, --format       Formát výstupu: txt (výchozí) nebo dxf.
       --overwrite    Přepsat existující výstupní soubory.
   -h, --help         Zobrazí tuto nápovědu.
 """;
@@ -83,6 +85,7 @@ Volby:
         string? output = null;
         var recursive = false;
         var overwrite = false;
+        var format = OutputFormat.Txt;
 
         for (var i = 0; i < args.Length; i++)
         {
@@ -116,6 +119,19 @@ Volby:
                 case "--overwrite":
                     overwrite = true;
                     break;
+                case "-f":
+                case "--format":
+                    if (!TryReadValue(args, ref i, out var formatValue))
+                    {
+                        error = "Chybí hodnota pro --format.";
+                        return false;
+                    }
+
+                    if (!TryParseFormat(formatValue!, out format, out error))
+                    {
+                        return false;
+                    }
+                    break;
                 default:
                     error = $"Neznámý argument '{current}'.";
                     return false;
@@ -137,7 +153,8 @@ Volby:
             Path.GetFullPath(input),
             Path.GetFullPath(output),
             recursive,
-            overwrite);
+            overwrite,
+            format);
         return true;
     }
 
@@ -153,5 +170,26 @@ Volby:
 
         value = args[++index];
         return true;
+    }
+
+    private static bool TryParseFormat(string value, out OutputFormat format, out string? error)
+    {
+        if (string.Equals(value, "txt", StringComparison.OrdinalIgnoreCase))
+        {
+            format = OutputFormat.Txt;
+            error = null;
+            return true;
+        }
+
+        if (string.Equals(value, "dxf", StringComparison.OrdinalIgnoreCase))
+        {
+            format = OutputFormat.Dxf;
+            error = null;
+            return true;
+        }
+
+        format = OutputFormat.Txt;
+        error = "Neznámý formát. Povolené hodnoty jsou 'txt' a 'dxf'.";
+        return false;
     }
 }
