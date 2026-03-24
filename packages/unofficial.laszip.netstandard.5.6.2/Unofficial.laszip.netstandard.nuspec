@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/10/nuspec.xsd">
+  <metadata>
+    <id>Unofficial.laszip.netstandard</id>
+    <version>5.6.2</version>
+    <title>Unofficial.laszip.netstandard</title>
+    <authors>Aardvark Platform Team</authors>
+    <owners>Aardvark Platform Team</owners>
+    <licenseUrl>https://raw.githubusercontent.com/aardvark-platform/aardvark.algodat/master/src/Unofficial.laszip.netstandard/LICENSE</licenseUrl>
+    <repository type="git" url="https://github.com/aardvark-platform/aardvark.algodat" />
+    <projectUrl>https://github.com/aardvark-platform/aardvark.algodat/</projectUrl>
+    <description>(c) 2007-2014, martin isenburg, rapidlasso - fast tools to catch reality
+(c) of C# port 2014-2017 by Shinta shintadono@googlemail.com</description>
+    <releaseNotes>- [e57] missing 'ReturnIndex' element: replaced exception with warning
+- [e57] E57Data3D.Points.ReadDataFull(...) now also returns 'ReturnCount' and 'ReturnIndex' data</releaseNotes>
+  </metadata>
+</package>

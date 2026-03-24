@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<coreProperties xmlns="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <dc:creator>Aardvark Platform Team</dc:creator>
+  <dc:description>(c) 2007-2014, martin isenburg, rapidlasso - fast tools to catch reality
+(c) of C# port 2014-2017 by Shinta shintadono@googlemail.com</dc:description>
+  <dc:identifier>Unofficial.laszip.netstandard</dc:identifier>
+  <version>5.6.2</version>
+  <keywords />
+  <dc:title>Unofficial.laszip.netstandard</dc:title>
+  <lastModifiedBy>paket</lastModifiedBy>
+</coreProperties>
